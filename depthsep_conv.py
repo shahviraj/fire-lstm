@@ -1,7 +1,13 @@
 
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
+
+
+get_ipython().magic(u'matplotlib inline')
+
+
+# In[3]:
 
 
 from __future__ import print_function
@@ -29,41 +35,67 @@ from keras import backend as K
 from keras.applications.imagenet_utils import decode_predictions
 from keras.applications.imagenet_utils import _obtain_input_shape
 
-comb_data = h5py.File('combustion_img_13.mat','r')
+
+# In[4]:
+
+
+import cv2 as cv2
+
+
+# In[5]:
+
+
+comb_data = h5py.File('/local/viraj/courses/ME592x/assn3/Aditya_data/combustion_img_13.mat','r')
 X = comb_data['train_set_x'][()]
 y = comb_data['train_set_y'][()]
+
+
+# In[6]:
+
+
 X_trf, X_tsf,y_trf, y_tsf = train_test_split(X.T, y, test_size=0.2)
-resize_resolution = (16,16)
-num_features = np.prod(resize_resolution)
-X_train_final = np.zeros([43200,num_features])
-a=43200
+
+
+# In[20]:
+
+
+#Resizing the image to lower resolution in (width, height): CHANGE THIS PARAMETER FOR DIFFERENT RESOLUTIONS
+width = 299
+height = 299
+num_features = width*height
+
+
+# In[29]:
+
+
+a=np.shape(X_trf)[0]
+X_train_final = np.zeros([a,num_features])
 for i in range(0,a):
     temp_image = X_trf[i,:] 
     temp_image = np.reshape(temp_image,[250,100])
-    temp_image = cv2.resize(temp_image, dsize=resize_resolution)
+    temp_image = temp_image.T
+    temp_image = cv2.resize(temp_image, dsize=((width,height)))
     temp_image = np.reshape(temp_image,[num_features,])
     X_train_final[i,:] = temp_image
     
-X_test_final = np.zeros([10800,num_features])
-b=10800
+b = np.shape(X_tsf)[0]
+X_test_final = np.zeros([b,num_features])
 for i in range(0,b):
     temp_image = X_tsf[i,:] 
     temp_image = np.reshape(temp_image,[250,100])
-    temp_image = cv2.resize(temp_image, dsize=resize_resolution)
+    temp_image = temp_image.T
+    temp_image = cv2.resize(temp_image, dsize=(width,height))
     temp_image = np.reshape(temp_image,[num_features,])
     X_test_final[i,:] = temp_image
-X_train_final = np.expand_dims(X_train_final, axis=2)
-X_test_final = np.expand_dims(X_test_final, axis=2)
 
 
-TF_WEIGHTS_PATH = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.4/xception_weights_tf_dim_ordering_tf_kernels.h5'
-TF_WEIGHTS_PATH_NO_TOP = 'https://github.com/fchollet/deep-learning-models/releases/download/v0.4/xception_weights_tf_dim_ordering_tf_kernels_notop.h5'
+# In[22]:
 
 
 def Xception(include_top=True, weights=None,
              input_tensor=None, input_shape=None,
              pooling=None,
-             classes=2):
+             classes=1000):
  
     if weights not in {'imagenet', None}:
         raise ValueError('The `weights` argument should be either '
@@ -97,7 +129,7 @@ def Xception(include_top=True, weights=None,
                                       default_size=299,
                                       min_size=71,
                                       data_format=K.image_data_format(),
-                                      include_top=include_top)
+                                      include_top='require_flatten')
 
     if input_tensor is None:
         img_input = Input(shape=input_shape)
@@ -228,6 +260,9 @@ def Xception(include_top=True, weights=None,
     return model
 
 
+# In[23]:
+
+
 def preprocess_input(x):
     x /= 255.
     x -= 0.5
@@ -235,17 +270,63 @@ def preprocess_input(x):
     return x
 
 
+# In[30]:
+
+
+X_train_final = X_train_final.reshape([a,height,width,1])
+X_test_final = X_test_final.reshape([b,height,width,1])
+
+
+# In[31]:
+
+
+X_train_final = np.concatenate((X_train_final,X_train_final,X_train_final), axis = 3)
+X_test_final = np.concatenate((X_test_final,X_test_final,X_test_final), axis = 3)
+
+
+# In[32]:
+
+
+np.shape(X_test_final)
+
+
+# In[38]:
+
+
+from keras.utils import to_categorical
+y_trf_oh = to_categorical(y_trf)
+y_tsf_oh = to_categorical(y_tsf)
+
+
+# In[37]:
+
+
+y_trf_oh[0:10]
+
+
+# In[40]:
+
+
 if __name__ == '__main__':
-    model = Xception(include_top=True, weights=None)
+    model = Xception(include_top=True, weights=None, classes=2)
 
-    img_path = 'sample.gif'
-    img = image.load_img(img_path, target_size=(299, 299))
-    x = image.img_to_array(img)
-    x = np.expand_dims(x, axis=0)
-    x = preprocess_input(x)
-    print('Input image shape:', x.shape)
+    #img_path = 'baboon.png'
+    #img = image.load_img(img_path, target_size=(299, 299))
+    #x = image.img_to_array(img)
+    #x = np.expand_dims(x, axis=0)
+    #x = preprocess_input(x)
+    
+    print('Input image shape:', X_train_final.shape)
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.fit(X_train_final, y_trf_oh[0:a], epochs=1, batch_size=16)
+   
+    
+    scores = model.evaluate(X_test_final, y_tsf_oh[0:b], verbose=0)
+    print("Accuracy: %.2f%%" % (scores[1]*100))
 
-    preds = model.predict(x)
-    print(np.argmax(preds))
-    print('Predicted:', decode_predictions(preds, 1))
+
+# In[ ]:
+
+
+
 
