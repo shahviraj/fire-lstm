@@ -1,6 +1,8 @@
 # fire-lstm
 ### Classification of Combustion instances into stable nad unstable combustions using ConvLSTM networks.
 
+#### Please change the path of the dataset to the '../fire-dataset/combution_img_13.mat' in all of the above files before running the code. 
+
 We submit this code as a part of our homework 4 submission for course ME592x at Iowa State University.
 
 1) Pre-processing:
