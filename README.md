@@ -8,9 +8,13 @@ We submit this code as a part of our homework 4 submission for course ME592x at 
 We load the images from the `.mat` file and resize (to 32x64 or similar resolution) it to a lower resolution. We then flatten it to store it as a vector.
 We divide the data in Training and Testing datasets.
 
-2) Convolutional LSTM Network in Keras:
+2) (i) LSTM model in Keras:
 
-The file `train.py` contains our implementation of Convolutional LSTM Network in Keras. Please run the file to see the summary of our model, training accuracy and loss, and performance of our model on Test dataset.
+We first implement and try a simple LSTM network in Keras. We perform a 1D convolution on the data before passing it to LSTM block, so that the spatial information would be captured by our network. The code is available in `vanila-lstm.py`.
+
+  (ii) Convolutional LSTM Network in Keras:
+
+The file `convLSTM.py` contains our implementation of Convolutional LSTM Network in Keras. Please run the file to see the summary of our model, training accuracy and loss, and performance of our model on Test dataset.
 
 3) Hyper-parameter Optimization:
 
